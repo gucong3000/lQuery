@@ -1,5 +1,5 @@
 /*
- * lQuery v0.1
+ * lQuery v0.2
  * https://github.com/gucong3000/lQuery
  */
 (function(){
