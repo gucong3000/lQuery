@@ -118,12 +118,8 @@
 			}
 			return this;
 		},
-		//异步遍历所选节点
-		each: function(rule, callback){
-			if(!callback){
-				callback = rule;
-				rule = this.selector;
-			}
+		//动态元素查找
+		query: function(rule, callback){
 			var css = "filter:Alpha(Opacity=0);",
 				randomName = lQuery.randomName(),
 				index = 0,
@@ -164,7 +160,15 @@
 			}
 			return this;
 		},
-		//停止异步遍历节点
+		//动态元素遍历，参数可变
+		each: function(rule, callback){
+			if(!callback){
+				callback = rule;
+				rule = this.selector;
+			}
+			return this.query(rule, callback);
+		},
+		//停止动态遍历节点
 		die: function (){
 			//删除初始化时插入的css样式表
 			this.styleNode.parentNode.removeChild(this.styleNode);

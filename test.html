@@ -2,36 +2,107 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>无标题文档</title>
+<title>lQuery</title>
+<style>
+.prettyprint .linenums li {
+	list-style-type: inherit;
+}
+</style>
 <script src="lQuery.js"></script>
 </head>
 <body>
+<div id="testers">
+	<div class="test1">test</div>
+	<div class="test2">test2</div>
+	<div class="test1">test</div>
+	<div class="test2">test2</div>
+	<div class="test1">test</div>
+	<div class="test2">test2</div>
+</div>
+
+<div>
+	<a href="#" class="run">运行</a>
+	<a href="#" class="die">删除效果</a>
+	<a href="#" class="add">动态添加节点</a>
+</div>
 <script>
-var cssQ = lQuery(".test2").each(function(){
-	this.innerHTML = "test11";
-}).style("color: red;");
-(function(){
-	var ifr = document.createElement("iframe");
-	ifr.onload = function(){
-		for(var i in window){
-			if(! ( i in ifr.contentWindow)){
-				console.log(window[i].toString());
-				console.log(i);
-				console.log("---------------------");
-			}
+(function($){
+	var q;
+	
+	function die(){
+		if(q){
+			q = q.die();
 		}
-		ifr.parentNode.removeChild(ifr);
-		console.log("done");
+		return false;
 	}
-	ifr.src = "about:blank";
-	document.documentElement.lastChild.appendChild(ifr);
-})()
+	
+	$(".run").each(function(){
+		this.onclick = function(){
+			die();
+			q = $(".test2").each(function(){
+				this.innerHTML = "test11";
+			}).style("color: red;");
+			return false;
+		};
+	});
+	
+	$(".die").each(function(){
+		this.onclick = die;
+	});
+
+	$(".add").each(function(){
+		this.onclick = function(){
+			var doc = document,
+				div = doc.createElement("div");
+			div.setAttribute("class", "test2");
+			div.className = "test2";
+			div.innerHTML = "new node";
+			doc.getElementById("testers").appendChild(div);
+		};
+	});
+})(lQuery);
 </script>
-	<div class="test1">test</div>
-	<div class="test2">test2</div>
-	<div class="test1">test</div>
-	<div class="test2">test2</div>
-	<div class="test1">test</div>
-	<div class="test2">test2</div>
+<pre class="prettyprint linenums">
+(function($){
+	var q;
+	
+	function die(){
+		if(q){
+			q = q.die();
+		}
+		return false;
+	}
+	
+	$(".run").each(function(){
+		this.onclick = function(){
+			die();
+			q = $(".test2").each(function(){
+				this.innerHTML = "test11";
+			}).style("color: red;");
+			return false;
+		};
+	});
+	
+	$(".die").each(function(){
+		this.onclick = die;
+	});
+
+	$(".add").each(function(){
+		this.onclick = function(){
+			var doc = document,
+				div = doc.createElement("div");
+			div.setAttribute("class", "test2");
+			div.className = "test2";
+			div.innerHTML = "new node";
+			doc.getElementById("testers").appendChild(div);
+		};
+	});
+})(lQuery);
+</pre>
+<link rel="Stylesheet" type="text/css" href="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css">
+<script type="text/javascript"  src="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js"></script> 
+<script>
+prettyPrint();
+</script>
 </body>
 </html>
