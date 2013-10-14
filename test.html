@@ -9,6 +9,48 @@
 }
 </style>
 <script src="lQuery.js"></script>
+<script>
+(function($){
+	var q;
+	
+	function run(){
+		die();
+		q = $(".test2").each(function(){
+			this.innerHTML = "test11";
+		}).style("color: red;");
+		return false;
+	}
+	
+	function die(){
+		if(q){
+			q = q.die();
+		}
+		return false;
+	}
+	
+	$(".run").each(function(){
+		this.onclick = run;
+	});
+	
+	$(".die").each(function(){
+		this.onclick = die;
+	});
+
+	$(".add").each(function(){
+		this.onclick = function(){
+			var doc = document,
+				div = doc.createElement("div");
+			div.setAttribute("class", "test2");
+			div.className = "test2";
+			div.innerHTML = "new node";
+			doc.getElementById("testers").appendChild(div);
+			return false;
+		};
+	});
+
+	run();
+})(lQuery);
+</script>
 </head>
 <body>
 <div id="testers">
@@ -21,51 +63,22 @@
 </div>
 
 <div>
-	<a href="#" class="run">运行</a>
-	<a href="#" class="die">删除效果</a>
+	<a href="#" class="run">开始动态查询</a>
+	<a href="#" class="die">停止动态查询</a>
 	<a href="#" class="add">动态添加节点</a>
 </div>
-<script>
-(function($){
-	var q;
-	
-	function die(){
-		if(q){
-			q = q.die();
-		}
-		return false;
-	}
-	
-	$(".run").each(function(){
-		this.onclick = function(){
-			die();
-			q = $(".test2").each(function(){
-				this.innerHTML = "test11";
-			}).style("color: red;");
-			return false;
-		};
-	});
-	
-	$(".die").each(function(){
-		this.onclick = die;
-	});
-
-	$(".add").each(function(){
-		this.onclick = function(){
-			var doc = document,
-				div = doc.createElement("div");
-			div.setAttribute("class", "test2");
-			div.className = "test2";
-			div.innerHTML = "new node";
-			doc.getElementById("testers").appendChild(div);
-		};
-	});
-})(lQuery);
-</script>
 <pre class="prettyprint linenums">
 (function($){
 	var q;
 	
+	function run(){
+		die();
+		q = $(".test2").each(function(){
+			this.innerHTML = "test11";
+		}).style("color: red;");
+		return false;
+	}
+	
 	function die(){
 		if(q){
 			q = q.die();
@@ -74,13 +87,7 @@
 	}
 	
 	$(".run").each(function(){
-		this.onclick = function(){
-			die();
-			q = $(".test2").each(function(){
-				this.innerHTML = "test11";
-			}).style("color: red;");
-			return false;
-		};
+		this.onclick = run;
 	});
 	
 	$(".die").each(function(){
@@ -95,9 +102,13 @@
 			div.className = "test2";
 			div.innerHTML = "new node";
 			doc.getElementById("testers").appendChild(div);
+			return false;
 		};
 	});
+
+	run();
 })(lQuery);
+</script>
 </pre>
 <link rel="Stylesheet" type="text/css" href="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css">
 <script type="text/javascript"  src="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js"></script> 

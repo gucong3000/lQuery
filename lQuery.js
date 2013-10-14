@@ -1,5 +1,5 @@
 /*
- * lQuery v0.2
+ * lQuery v0.3
  * https://github.com/gucong3000/lQuery
  */
 (function(){
@@ -11,17 +11,13 @@
 		addEventListener = doc.addEventListener,
 		querySelector = doc.querySelector,
 		randomNames = {},
+		loopFns = !addEventListener && querySelector ? [] : null,
 		readyFns = [],
 		readyFnOld;
 
 	//对象初始化函数
 	function lQuery(selector) {
 		return new lQuery.fn.init(selector);
-	}
-
-	//返回文档状态是否就绪
-	function isReady(){
-		return doc.readyState == "complete";
 	}
 
 	//将callback在文档就绪时和节点插入时执行
@@ -51,27 +47,9 @@
 		}
 	}
 
-	//doc.addEventListener缩写
-	if(addEventListener) {
-		addEventListener = function(eType, call){
-			doc.addEventListener( eType, call, false );
-		}
-	}
-
-	//除IE6、7外，建立DOMContentLoaded响应机制
-	if(querySelector && !isReady()){
-		if ( addEventListener ) {
-			addEventListener( "DOMContentLoaded", completed );
-		} else {
-			//
-			var readyFnOld = doc.onreadystatechange;
-			doc.onreadystatechange = function(){
-				completed();
-				if(readyFnOld){
-					readyFnOld();
-				}
-			}
-		}
+	//返回文档状态是否就绪
+	lQuery.isReady = function(){
+		return doc.readyState == "complete";
 	}
 
 	//生成一个不重复的变量名
@@ -83,22 +61,54 @@
 		return randomNames[name] = name;
 	};
 
+	//doc.addEventListener缩写
+	if(addEventListener) {
+		addEventListener = function(eType, call){
+			doc.addEventListener( eType, call, false );
+		}
+	}
+
+	//除IE6、7外，建立DOMContentLoaded响应机制
+	if(querySelector && !lQuery.isReady()){
+		if ( addEventListener ) {
+			//无c标准的DOMContentLoaded事件
+			addEventListener( "DOMContentLoaded", completed );
+		} else {
+			//IE模拟DOMContentLoaded事件
+			var readyFnOld = doc.onreadystatechange;
+			doc.onreadystatechange = function(){
+				completed();
+				if(readyFnOld){
+					readyFnOld();
+				}
+			}
+		}
+	}
+
+	//IE8下不支持节点插入事件，用setInterval模拟
+	if(loopFns){
+		setInterval(function(){
+			for(var i = 0; i < loopFns.length; i++){
+				var loopFnsArry = loopFns[i];
+				if(loopFnsArry && loopFnsArry.hooks){
+					for(var j = 0; j < loopFnsArry.hooks.length; j++){
+						loopFnsArry.hooks[j]();
+					}
+				}
+			}
+		}, 200);
+	}
+
 	//声明lQuery对象的prototype
 	lQuery.fn = {
 		//初始化
 		init: function(selector) {
-			var me = this;
-			me.selector = selector;
+			this.hooks = [];
+			this.selector = selector;
 			//声明一个css样式表并插入页面当前位置
-			root.lastChild.appendChild(me.styleNode = doc.createElement("style"));
-			if(!addEventListener && querySelector){
-				//IE8下不支持节点插入事件，用setInterval模拟
-				me.timer = setInterval(function(){
-					for(var i = 0; i < me.hooks.length; i++){
-						me.hooks[i]();
-					}
-				}, 200);
-			}
+			root.lastChild.appendChild(this.styleNode = doc.createElement("style"));
+			//IE8下降hooks加入全局定时器
+			loopFns && loopFns.push(this);
 		},
 		//写入css
 		style: function(rule, css){
@@ -134,8 +144,11 @@
 					node[randomName] = true;
 					callback.call(node, index++);
 					//IE下关闭透明滤镜
-					if(!addEventListener && (alpha = node.filters.Alpha)){
-						alpha.Opacity === 0 && (alpha.Enabled = false);
+					if(!addEventListener){
+						setTimeout(function(){
+							var alpha = node.filters["Alpha"];
+							alpha && alpha.Opacity === 0 && (alpha.Enabled = false);
+						});
 					}
 				}
 			}
@@ -170,22 +183,22 @@
 		},
 		//停止动态遍历节点
 		die: function (){
-			//删除初始化时插入的css样式表
-			this.styleNode.parentNode.removeChild(this.styleNode);
-			for(var i = 0; i < this.hooks.length; i++){
-				var fn = this.hooks[i];
-				if(addEventListener){
-					//标准浏览器下删除DOMNodeInserted事件
-					doc.removeEventListener( "DOMNodeInserted", fn, false );
-				} else {
-					//IE6\7删除hook函数
-					delete lQuery[fn];
+			if(this.hooks){
+				//删除初始化时插入的css样式表
+				this.styleNode.parentNode.removeChild(this.styleNode);
+				for(var fn, i = 0; i < this.hooks.length; i++){
+					fn = this.hooks[i];
+					if(addEventListener){
+						//标准浏览器下删除DOMNodeInserted事件
+						doc.removeEventListener( "DOMNodeInserted", fn, false );
+					} else {
+						//IE6\7删除hook函数
+						delete lQuery[fn];
+					}
 				}
+				this.hooks = null;
 			}
-			//IE8删除定时器
-			clearInterval(this.timer);
 		},
-		hooks: []
 	}
 
 	lQuery.fn.init.prototype = lQuery.fn;

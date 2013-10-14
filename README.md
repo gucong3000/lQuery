@@ -1,4 +1,4 @@
-lQuery v0.2
+lQuery v0.3
 ===========
 
 Light Query 最轻量级的js选择器
