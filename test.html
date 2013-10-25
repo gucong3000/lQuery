@@ -2,20 +2,35 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>lQuery</title>
+<title>Light Query</title>
 <style>
 .prettyprint .linenums li {
 	list-style-type: inherit;
 }
 </style>
-<script src="lQuery.js"></script>
+<!--[if lte IE 8]>
+<script src="console.js"></script>
+<![endif]-->
+<script src="http://seajs.org/dist/sea.js"></script>
 <script>
-(function($){
+(function(){
+	var div = document.createElement("div");
+	seajs.config({
+		base: "./",
+		alias: {
+			"lightquery": "lightquery.js",
+			"classlist": div.classList ? "" : "classlist.js"
+		}
+	});
+})();
+
+seajs.use(["classlist", "lightquery"], function(LQ){
+	LQ = LQ || window.LQ
 	var q;
-	
+
 	function run(){
 		die();
-		q = $(".test2").each(function(){
+		q = LQ(".test2").each(function(){
 			this.innerHTML = "test11";
 		}).style("color: red;");
 		return false;
@@ -28,15 +43,15 @@
 		return false;
 	}
 	
-	$(".run").each(function(){
+	LQ(".run").each(function(){
 		this.onclick = run;
 	});
 	
-	$(".die").each(function(){
+	LQ(".die").each(function(){
 		this.onclick = die;
 	});
 
-	$(".add").each(function(){
+	LQ(".add").each(function(){
 		this.onclick = function(){
 			var doc = document,
 				div = doc.createElement("div");
@@ -49,15 +64,20 @@
 	});
 
 	run();
-})(lQuery);
+});
+
+seajs.use(["http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css", "http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js"], function(){
+	prettyPrint();
+});
+
 </script>
 </head>
 <body>
 <div id="testers">
 	<div class="test1">test</div>
-	<div class="test2">test2</div>
+	<div id="ttt" class="test2">test2</div>
 	<div class="test1">test</div>
-	<div class="test2">test2</div>
+	<div class="test2 sadasd">test2</div>
 	<div class="test1">test</div>
 	<div class="test2">test2</div>
 </div>
@@ -68,12 +88,12 @@
 	<a href="#" class="add">动态添加节点</a>
 </div>
 <pre class="prettyprint linenums">
-(function($){
+(function(LQ){
 	var q;
 	
 	function run(){
 		die();
-		q = $(".test2").each(function(){
+		q = LQ(".test2").each(function(){
 			this.innerHTML = "test11";
 		}).style("color: red;");
 		return false;
@@ -86,15 +106,15 @@
 		return false;
 	}
 	
-	$(".run").each(function(){
+	LQ(".run").each(function(){
 		this.onclick = run;
 	});
 	
-	$(".die").each(function(){
+	LQ(".die").each(function(){
 		this.onclick = die;
 	});
 
-	$(".add").each(function(){
+	LQ(".add").each(function(){
 		this.onclick = function(){
 			var doc = document,
 				div = doc.createElement("div");
@@ -107,13 +127,7 @@
 	});
 
 	run();
-})(lQuery);
-</script>
+})(LQ);
 </pre>
-<link rel="Stylesheet" type="text/css" href="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css">
-<script type="text/javascript"  src="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js"></script> 
-<script>
-prettyPrint();
-</script>
 </body>
 </html>

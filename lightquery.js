@@ -1,23 +1,43 @@
 /*
- * lQuery v0.3
+ * Light Query v0.4
  * https://github.com/gucong3000/lQuery
  */
 (function(){
 	"use strict";
-	var queryName = "lQuery",
+
+	var queryName = "LQ",
 		win = window,
 		doc = win.document,
 		root = doc.documentElement,
 		addEventListener = doc.addEventListener,
 		querySelector = doc.querySelector,
+		protoProp = "prototype",
 		randomNames = {},
 		loopFns = !addEventListener && querySelector ? [] : null,
 		readyFns = [],
-		readyFnOld;
+		readyFnOld,
+		dataAttr;
 
+	//补全低端浏览器下的String.prototype.trim
+	if(!String[protoProp].trim){
+		String[protoProp].trim = function(){
+			return this.replace(/^\s+|\s+$/g, "");
+		};
+	}
+
+	//补全低端浏览器下的Array.prototype.forEach
+	if (!Array[protoProp].forEach) {
+		Array[protoProp].forEach = function (fn, scope) {
+			for ( var i = 0; i < this.length; i++ ) {
+				if (i in this) {
+					fn.call(scope, this[i], i, this);
+				}
+			}
+		};
+	}
 	//对象初始化函数
-	function lQuery(selector) {
-		return new lQuery.fn.init(selector);
+	function LightQuery(selector) {
+		return new LightQuery.fn.init(selector);
 	}
 
 	//将callback在文档就绪时和节点插入时执行
@@ -40,38 +60,56 @@
 	//执行文档就绪队列中的函数
 	function completed(){
 		if (readyFns) {
-			for(var i = 0; i < readyFns.length; i++){
-				readyFns[i]();
-			}
+			readyFns.forEach(function(fn){
+				fn();
+			});
 			readyFns = null;
 		}
 	}
 
 	//返回文档状态是否就绪
-	lQuery.isReady = function(){
-		return doc.readyState == "complete";
-	}
+	LightQuery.isReady = function(){
+		return doc.readyState === "complete";
+	};
 
 	//生成一个不重复的变量名
-	lQuery.randomName = function(){
-		var name = (function randomName(){
-			name = queryName + (new Date() - 0) + parseInt(Math.random() * 0xfff);
+	LightQuery.randomName = function(){
+		var name = (function(){
+			name = queryName + (+new Date()) + parseInt(Math.random() * 0xfff);
 			return randomNames[name] ? arguments.callee() : name;
 		})();
 		return randomNames[name] = name;
+	};
+
+	//LightQuery.data函数所需的在Node上存储数据所需的属性的名称
+	dataAttr = LightQuery.randomName();
+
+	//在Node上储存数据所用的函数
+	LightQuery.data = function(node, key, val, udf){
+		var dataSet = node[dataAttr];
+		if(!dataSet){
+			node[dataAttr] = dataSet = {};
+		}
+		if(val === udf){
+			val = dataSet[key];
+		} else {
+			dataSet[key] = val;
+			val = this;
+		}
+		return val;
 	};
 
 	//doc.addEventListener缩写
 	if(addEventListener) {
 		addEventListener = function(eType, call){
 			doc.addEventListener( eType, call, false );
-		}
+		};
 	}
 
 	//除IE6、7外，建立DOMContentLoaded响应机制
-	if(querySelector && !lQuery.isReady()){
+	if(querySelector && !LightQuery.isReady()){
 		if ( addEventListener ) {
-			//无c标准的DOMContentLoaded事件
+			//w3c标准的DOMContentLoaded事件
 			addEventListener( "DOMContentLoaded", completed );
 		} else {
 			//IE模拟DOMContentLoaded事件
@@ -79,28 +117,27 @@
 			doc.onreadystatechange = function(){
 				completed();
 				if(readyFnOld){
-					readyFnOld();
+					readyFnOld.apply(this, arguments);
 				}
-			}
+			};
 		}
 	}
 
 	//IE8下不支持节点插入事件，用setInterval模拟
 	if(loopFns){
 		setInterval(function(){
-			for(var i = 0; i < loopFns.length; i++){
-				var loopFnsArry = loopFns[i];
+			loopFns.forEach(function(loopFnsArry){
 				if(loopFnsArry && loopFnsArry.hooks){
-					for(var j = 0; j < loopFnsArry.hooks.length; j++){
-						loopFnsArry.hooks[j]();
-					}
+					loopFnsArry.hooks.forEach(function(fn){
+						fn();
+					});
 				}
-			}
-		}, 200);
+			});
+		}, 100);
 	}
 
-	//声明lQuery对象的prototype
-	lQuery.fn = {
+	//声明LightQuery对象的prototype
+	LightQuery.fn = {
 		//初始化
 		init: function(selector) {
 			this.hooks = [];
@@ -118,10 +155,9 @@
 			}
 			if(rule && this.styleNode.styleSheet){
 				//担心IE低版遇到表达式中部分不识别导致整体失效，所以将规则拆分后写入
-				rule = rule.split(/\s?,\s?/);
-				for (var i = 0; i < rule.length; i++) {
-					this.styleNode.styleSheet.addRule(rule[i], css);
-				};
+				rule.trim().split(/\s?,\s?/).forEach(function(subRule){
+					this.styleNode.styleSheet.addRule(subRule, css);
+				}, this);
 			} else {
 				//一般浏览器下写入css
 				this.styleNode.appendChild(doc.createTextNode(rule + "{" + css + "}"));
@@ -130,47 +166,36 @@
 		},
 		//动态元素查找
 		query: function(rule, callback){
-			var css = "filter:Alpha(Opacity=0);",
-				randomName = lQuery.randomName(),
+			var randomName = LightQuery.randomName(),
 				index = 0,
-				alpha,
+				stop = 0,
 				hook;
 				
 			//去重后带参执行回调，参数为节点对象
 			function call(node){
 				//过滤回调过的节点
-				if(!node[randomName]){
-					//标记为
-					node[randomName] = true;
-					callback.call(node, index++);
-					//IE下关闭透明滤镜
-					if(!addEventListener){
-						setTimeout(function(){
-							var alpha = node.filters["Alpha"];
-							alpha && alpha.Opacity === 0 && (alpha.Enabled = false);
-						});
-					}
+				if(!LightQuery.data(node, randomName) && !stop){
+					//标记为已回调过了
+					LightQuery.data(node, randomName, true);
+					stop = callback.call(node, index++, node) === false;
 				}
 			}
 			if(querySelector){
 				//其他浏览器下利用document.querySelectorAll查找
 				readyEval(hook = function(){
-					var nodes = doc.querySelectorAll(rule);
-					for(var i = 0; i < nodes.length; i++){
-						call(nodes[i]);
-					}
+					Array[protoProp].forEach.call(doc.querySelectorAll(rule), function(node){
+						call(node);
+					});
 				});
 			} else {
 				//IE6\7下利用css表达式查找节点
-				css += randomName + ":expression((function(n){try{return " + queryName + "." + randomName + "(n)}catch(ex){}})(this))";
-				lQuery[randomName] = call;
+				LightQuery[randomName] = call;
+				this.style(rule, randomName + ":expression((function(n){try{return " + queryName + "." + randomName + "(n)}catch(ex){}})(this))");
 				hook = randomName;
 			}
+
 			this.hooks.push(hook);
-			//IE6\7\8下写入css
-			if(!addEventListener){
-				this.style(rule, css);
-			}
+
 			return this;
 		},
 		//动态元素遍历，参数可变
@@ -186,23 +211,30 @@
 			if(this.hooks){
 				//删除初始化时插入的css样式表
 				this.styleNode.parentNode.removeChild(this.styleNode);
-				for(var fn, i = 0; i < this.hooks.length; i++){
-					fn = this.hooks[i];
+				this.hooks.forEach(function(fn){
 					if(addEventListener){
 						//标准浏览器下删除DOMNodeInserted事件
 						doc.removeEventListener( "DOMNodeInserted", fn, false );
 					} else {
 						//IE6\7删除hook函数
-						delete lQuery[fn];
+						delete LightQuery[fn];
 					}
-				}
+				});
 				this.hooks = null;
 			}
-		},
+		}
+	};
+
+	LightQuery.fn.init[protoProp] = LightQuery.fn;
+
+	if (typeof define === 'function' && ( define.amd || define.cmd )) {
+		// AMD. CMD. Register as an anonymous module.
+		define(function(){
+			return LightQuery;
+		});
 	}
 
-	lQuery.fn.init.prototype = lQuery.fn;
-
-	win[queryName] = lQuery;
+	// Browser globals
+	win[queryName] = LightQuery;
 
 })();

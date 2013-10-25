@@ -1,4 +1,4 @@
-lQuery v0.3
+lQuery v0.4
 ===========
 
 Light Query 最轻量级的js选择器
@@ -24,4 +24,14 @@ q.style("color: red;");
 ### 停止动态元素查找，并删除样式
 ```bash
 q.die();
+```
+
+### classList插件
+```bash
+var q = $(".test2").each(function(){
+	this.classList.add("test8848");		//添加class
+	this.classList.remove("test2");		//删除class
+	this.classList.toggle("test3");		//切换class
+	this.classList.contains("test3");	//判断class是否存在
+});
 ```
