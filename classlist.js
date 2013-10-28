@@ -11,7 +11,7 @@
 		define(factory);
 	} else {
 		factory(function(){
-			return root.LQ || root.jQuery || {};
+			return root.LQ;
 		});
 	}
 }(this, function(require){
@@ -19,13 +19,18 @@
 		protoProp = "prototype",
 		objCtr = Object,
 		win = window,
-		LQ = require("lightquery"),
-		datekey = LQ.randomName ? LQ.randomName() : "LQclassList" + (+new Date()),
+		datekey,
+		dataFn,
 		query,
 		elemCtrProto = (win.HTMLElement || win.Element),
-		dataFn = LQ.data || LQ.fn.data ? function(node, val){
-			return LQ.data ? LQ.data(node, datekey, val) : LQ(node).data(node, datekey, val);
-		} : null;
+		LQ = require("lightquery");
+
+	if(LQ){
+		datekey = LQ.randomName();
+		dataFn = function(node, val){
+			return LQ.data(node, datekey, val);
+		};
+	}
 
 	//声明classList的原型，DOMTokenList对象
 	function DOMTokenList(node){
@@ -84,13 +89,15 @@
 		},
 
 		//toggleClass方法
-		toggle: function(classStr){
-			classStr = classStr.trim();
-			if(this.contains(classStr)){
-				this.remove(classStr);
-			} else {
-				this.add(classStr);
+		toggle: function(token, forse){
+			var result = this.contains(token),
+				method = result ? forse !== true && "remove" : forse !== false && "add";
+
+			if (method) {
+				this[method](token);
 			}
+
+			return !result;
 		},
 
 		//伪数组所需的length属性
@@ -128,27 +135,26 @@
 	//如果有Element或HTMLElement原型
 	if(elemCtrProto){
 		elemCtrProto = elemCtrProto[protoProp];
-		if(classListProp in elemCtrProto){
-			return LQ;
-		}
-		//IE9下使用Object.defineProperty方式定义get方法
-		if (objCtr.defineProperty) {
-			var classListPropDesc = {
-					get: classListGetter,
-					enumerable: true,
-					configurable: true
-				};
-			try {
-				objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-			} catch (ex) { // IE 8 doesn't support enumerable:true
-				if (ex.number === -0x7FF5EC54) {
-					classListPropDesc.enumerable = false;
+		if(!(classListProp in elemCtrProto)){
+			//IE9下使用Object.defineProperty方式定义get方法
+			if (objCtr.defineProperty) {
+				var classListPropDesc = {
+						get: classListGetter,
+						enumerable: true,
+						configurable: true
+					};
+				try {
 					objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+				} catch (ex) { // IE 8 doesn't support enumerable:true
+					if (ex.number === -0x7FF5EC54) {
+						classListPropDesc.enumerable = false;
+						objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+					}
 				}
+			} else if (objCtr[protoProp].__defineGetter__) {
+				//高端浏览器下使用Element.__defineGetter__方式定义get方法
+				elemCtrProto.__defineGetter__(classListProp, classListGetter);
 			}
-		} else if (objCtr[protoProp].__defineGetter__) {
-			//高端浏览器下使用Element.__defineGetter__方式定义get方法
-			elemCtrProto.__defineGetter__(classListProp, classListGetter);
 		}
 	} else {
 		//IE6、7下将每一个LQ.fn.query捕获到的node添加classList
@@ -163,8 +169,6 @@
 			return query.call(this, rule, call);
 		};
 	}
-	DOMTokenList.toString = function(){
-		return "DOMTokenList";
-	}
+
 	return LQ;
 }));
