@@ -45,7 +45,7 @@
 	//字符串转义以免被解析为HTML
 	function txt2html(text){
 		var line = doc.createElement("div");
-		line.innerText = text.replace(/\r\n/g, "");
+		line.innerText = text.replace(/\s+/g, " ");
 		return line.innerHTML;
 	}
 
@@ -61,16 +61,19 @@
 				str = "[Element] " + obj.outerHTML;
 			//Function
 			} else if( obj.call && obj.apply ) {
-				str = "[Function] " + obj.toString().replace(/\s+/g, " ");;
+				str = "[Function] " + obj.toString();
 			//其他对象
 			} else {
 				str = obj.toString();
+				if(/Error\]/.test(str)){
+					str += " " + obj.number;
+					str += ": " + obj.message || obj.description;
+				}
 			}
 		} catch(ex) {
-			// null \ undefined 、NaN
 			str = String(obj);
 		}
-		return txt2html(str);
+		return txt2html(str.replace(/^\[object\s+/, "["));
 	}
 
 	//console.log

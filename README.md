@@ -1,4 +1,4 @@
-lQuery v0.4
+lQuery v0.5
 ===========
 
 Light Query 最轻量级的js选择器
@@ -33,5 +33,22 @@ var q = $(".test2").each(function(){
 	this.classList.remove("test2");		//删除class
 	this.classList.toggle("test3");		//切换class
 	this.classList.contains("test3");	//判断class是否存在
+});
+```
+
+### event插件
+```bash
+var q = $("a").each(function(){
+	this.addEventListener("click", function(e){
+		e.preventDefault();
+		console.log(e.target);
+	});
+});
+```
+
+### attr插件
+```bash
+var q = $("a").each(function(){
+	this.getAttribute("href"); //修正IE6 IE7下bug
 });
 ```

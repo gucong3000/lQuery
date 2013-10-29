@@ -21,7 +21,6 @@
 		win = window,
 		datekey,
 		dataFn,
-		query,
 		elemCtrProto = (win.HTMLElement || win.Element),
 		LQ = require("lightquery");
 
@@ -36,7 +35,8 @@
 	function DOMTokenList(node){
 		//toString方法中刷新classList的键值
 		this.toString = function(){
-			var arr = node.className.trim().split(/\s+/),
+			var classStr = node.className;
+				arr = classStr ? classStr.trim().split(/\s+/) : [],
 				i = 0;
 			for(; i < arr.length; i++ ){
 				if(this[i] !== arr[i]){
@@ -66,9 +66,11 @@
 		//传统的removeClass方式
 		this.remove = function(classStr){
 			classStr = classStr.trim();
-			var reg = new RegExp('(\\s+|^)' + classStr + '(\\s+|$)');
-			while(this.contains(classStr)){
-				node.className = node.className.replace(reg, ' ');
+			if(this.contains(classStr)){
+				node.className = Array.prototype.filter.call(this, function(str){
+					return str !== classStr;
+				}.join(" "));
+				this.toString();
 			}
 		};
 		//刷新一次数据，也就是初始化
@@ -85,7 +87,9 @@
 		//判断class是否存在
 		contains: function(classStr){
 			classStr = classStr.trim();
-			return new RegExp('(\\s|^)' + classStr + '(\\s|$)').test(this.toString());
+			return this.toString().split(/\s+/).some(function(str){
+				return str === classStr;
+			});
 		},
 
 		//toggleClass方法
@@ -158,16 +162,11 @@
 		}
 	} else {
 		//IE6、7下将每一个LQ.fn.query捕获到的node添加classList
-		query = LQ.fn.query
-		LQ.fn.query = function(rule, callback){
-			function call(){
-				if(!(classListProp in this)){
-					this[classListProp] = getClassList(this);
-				}
-				callback.apply(this, arguments);
+		LQ.fn.query.hijack.push(function(node){
+			if(!(classListProp in node)){
+				node[classListProp] = getClassList(this);
 			}
-			return query.call(this, rule, call);
-		};
+		});
 	}
 
 	return LQ;

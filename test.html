@@ -11,65 +11,65 @@
 <!--[if lte IE 8]>
 <script src="console.js"></script>
 <![endif]-->
-<script src="http://seajs.org/dist/sea.js"></script>
+<script src="lazy.js?test=1"></script>
 <script>
-(function(){
-	var div = document.createElement("div");
-	seajs.config({
-		base: "./",
-		alias: {
-			"lightquery": "lightquery.js",
-			"classlist": div.classList ? "" : "classlist.js"
-		}
-	});
-})();
-
-seajs.use(["classlist", "lightquery"], function(LQ){
-	LQ = LQ || window.LQ
-	var q;
-
-	function run(){
-		die();
-		q = LQ(".test2").each(function(){
-			this.innerHTML = "test11";
-		}).style("color: red;");
-		return false;
-	}
+(function(LQ){
+		var q;
 	
-	function die(){
-		if(q){
-			q = q.die();
-		}
-		return false;
-	}
-	
-	LQ(".run").each(function(){
-		this.onclick = run;
-	});
-	
-	LQ(".die").each(function(){
-		this.onclick = die;
-	});
-
-	LQ(".add").each(function(){
-		this.onclick = function(){
-			var doc = document,
-				div = doc.createElement("div");
-			div.setAttribute("class", "test2");
-			div.className = "test2";
-			div.innerHTML = "new node";
-			doc.getElementById("testers").appendChild(div);
+		function run(){
+			die();
+			q = LQ(".test2").each(function(i){
+				this.innerHTML = this.getAttribute("class");
+			}).style("color: red;");
 			return false;
-		};
-	});
-
-	run();
-});
-
+		}
+		
+		function die(){
+			if(q){
+				q = q.die();
+			}
+			return false;
+		}
+		
+		LQ(".run").each(function(){
+			this.addEventListener("click", function(e){
+				console.log(0);
+				console.log(e);
+			});
+			this.addEventListener("click", function(e){
+				console.log(1);
+				console.log(e);
+			});
+			this.addEventListener("click", run);
+		});
+		
+		LQ(".die").each(function(){
+			this.onclick = die;
+		});
+	
+		LQ(".add").each(function(){
+			this.onclick = function(){
+				var doc = document,
+					div = doc.createElement("div");
+				div.setAttribute("class", "test2");
+				div.className = "test2";
+				div.innerHTML = "new node";
+				doc.getElementById("testers").appendChild(div);
+				return false;
+			};
+		});
+	
+		run();
+		
+})(LQ);
+</script>
+<script src="sea.js"></script>
+<script>
 seajs.use(["http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css", "http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js"], function(){
-	prettyPrint();
+	if(window.prettyPrint){
+		prettyPrint();
+	}
 });
-
 </script>
 </head>
 <body>

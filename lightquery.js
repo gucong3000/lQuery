@@ -1,5 +1,5 @@
 /*
- * Light Query v0.4
+ * Light Query v0.5
  * https://github.com/gucong3000/lQuery
  */
 (function(){
@@ -18,23 +18,6 @@
 		readyFnOld,
 		dataAttr;
 
-	//补全低端浏览器下的String.prototype.trim
-	if(!String[protoProp].trim){
-		String[protoProp].trim = function(){
-			return this.replace(/^\s+|\s+$/g, "");
-		};
-	}
-
-	//补全低端浏览器下的Array.prototype.forEach
-	if (!Array[protoProp].forEach) {
-		Array[protoProp].forEach = function (fn, scope) {
-			for ( var i = 0; i < this.length; i++ ) {
-				if (i in this) {
-					fn.call(scope, this[i], i, this);
-				}
-			}
-		};
-	}
 	//对象初始化函数
 	function LightQuery(selector) {
 		return new LightQuery.fn.init(selector);
@@ -177,6 +160,11 @@
 				if(!LightQuery.data(node, randomName) && !stop){
 					//标记为已回调过了
 					LightQuery.data(node, randomName, true);
+					LightQuery.fn.query.hijack.forEach(function(fn){
+						try {
+							fn(node);
+						} catch (ex){}
+					});
 					stop = callback.call(node, index++, node) === false;
 				}
 			}
@@ -224,6 +212,8 @@
 			}
 		}
 	};
+
+	LightQuery.fn.query.hijack = [];
 
 	LightQuery.fn.init[protoProp] = LightQuery.fn;
 
