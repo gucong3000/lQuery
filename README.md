@@ -1,5 +1,5 @@
-lQuery v0.5
-===========
+Light Query v0.5
+================
 
 Light Query 最轻量级的js选择器
 --------------------------------------
@@ -37,6 +37,7 @@ var q = $(".test2").each(function(){
 ```
 
 ### event插件
+为IE提供addEventListener支持，并修正事件注册顺序和执行顺序相反的问题。
 ```bash
 var q = $("a").each(function(){
 	this.addEventListener("click", function(e){

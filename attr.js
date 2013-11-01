@@ -26,8 +26,8 @@
 		LQ.fn.query.hijack.push(function(node){
 			if(!dataFn(node)){
 				var getAttribute = node.getAttribute;
-				node.getAttribute = function(name){
-					return getAttribute.call(this, name, 2);
+				node.getAttribute = function(name, arg){
+					return getAttribute.call(this, name, typeof arg === "undefined" ? 2 : arg);
 				}
 				dataFn(node, getAttribute);
 			}
