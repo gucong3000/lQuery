@@ -136,14 +136,16 @@
 				css = rule;
 				rule = this.selector;
 			}
-			if(rule && this.styleNode.styleSheet){
-				//担心IE低版遇到表达式中部分不识别导致整体失效，所以将规则拆分后写入
-				rule.trim().split(/\s?,\s?/).forEach(function(subRule){
-					this.styleNode.styleSheet.addRule(subRule, css);
-				}, this);
-			} else {
-				//一般浏览器下写入css
-				this.styleNode.appendChild(doc.createTextNode(rule + "{" + css + "}"));
+			if(rule && css){
+				if(this.styleNode.styleSheet){
+					//担心IE低版遇到表达式中部分不识别导致整体失效，所以将规则拆分后写入
+					rule.trim().split(/\s?,\s?/).forEach(function(subRule){
+						this.styleNode.styleSheet.addRule(subRule, css);
+					}, this);
+				} else {
+					//一般浏览器下写入css
+					this.styleNode.appendChild(doc.createTextNode(rule + "{" + css + "}"));
+				}
 			}
 			return this;
 		},
