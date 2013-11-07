@@ -8,43 +8,65 @@
 	var doc = document,
 		placeholder = "placeholder",
 		notSupport = createElement("input")[placeholder] === undefined,
+		cssDefault = "color:gray;text-overflow:ellipsis;overflow:hidden",
 		head = doc.documentElement.firstChild,
 		styleNode = createElement("style"),
 		documentMode = doc.documentMode,
 		normal = "normal",
 		activeElement;
 		
+	//document.createElement缩写
 	function createElement(tag){
 		return doc.createElement(tag);
 	}
 
+	//获取node的style对象，优先使用runtimeStyle
+	function runtimeStyle(node){
+		return node.runtimeStyle || node.style;
+	}
+
+	//获取node的计算样式，兼容IE，非IE
+	function currentStyle(node){
+		return node.currentStyle || getComputedStyle(node, null);
+	}
+
+	//为this简历模拟的placeholder
 	function createHolder(){
 		var input = this;
+		//判断是否文本框
 		if(/^text|textarea|password|email|month|search|tel|url$/i.test(input.type)){
 			var holder,
+				//更新placeholder文本
 				setText = function (){
+					//读取placeholder
 					var text = placeholder in input ? input[placeholder] : input.getAttribute(placeholder);
+					//如果placeholder属性不为空而node还没有建立
 					if(!holder && text) {
+						//建立一个node
 						holder = createElement(placeholder);
 						holder.onmousedown = function(){
+							//鼠标点holder是文本框获得焦点
 							setTimeout(function(){
 								input.focus();
 							}, 1);
 							return false;
 						};
 					}
+					//如果有node，更新其内容为
 					if(holder){
 						holder.innerHTML = text || "";
 					}
 				},
 				timer,
+				//控制node的样式
 				setDisplay = function (){
 					clearTimeout(timer);
 					if(holder){
 						var show = holder.innerHTML && !input.value,
-							style = holder.runtimeStyle,
+							style = runtimeStyle(holder),
 							parent = input.parentNode;
 						style.display = show && parent ? "inline-block" : "none";
+						//如果文本框可见时
 						if(parent && (input.offsetHeight || input.offsetWidth)){
 							if(show){
 								if(/^textarea$/i.test(input.tagName)){
@@ -54,7 +76,8 @@
 									style.whiteSpace = "nowrap";
 									style.wordBreak = normal;
 								}
-								if(input.currentStyle.position !== "static"){
+								//如果文本框定位不为static，则自动计算placeholder的位置
+								if(currentStyle(input).position !== "static"){
 									style.width = (input.clientWidth || input.offsetWidth) + "px";
 									style.left = input.offsetLeft + "px";
 									style.top = input.offsetTop + "px";
@@ -65,13 +88,13 @@
 									currCss("paddingTop");
 									currCss("zIndex");
 								}
-								style.textOverflow = "ellipsis"; 
-								style.overflow = "hidden";
+								//设置集成样式
 								currCss("lineHeight");
 								currCss("fontFamily");
 								currCss("fontWidth");
 								currCss("fontSize");
 
+								//将node插入文本框之后
 								if(input.nextSibling){
 									parent.insertBefore(holder, input.nextSibling);
 								} else {
@@ -79,17 +102,20 @@
 								}
 							}
 						} else {
+							//文本框不可见时延迟运行setDisplay
 							timer = setTimeout(setDisplay, 50);
 						}
 					}
 				},
+				//样式集成，取文本框的样式赋值给placeholder
 				currCss = function(name,attr){
 					try{
-						holder.runtimeStyle[name] = input.currentStyle[attr || name];
+						runtimeStyle(holder)[name] = currentStyle(input)[attr || name];
 					}catch(e){}
 				},
+				//文本框无值时将字体颜色设为透明
 				transparent = function(){
-					input.runtimeStyle.color = input.value ? "" : "transparent";
+					runtimeStyle(input).color = input.value ? "" : "transparent";
 				};
 
 			//旧版IE下事件注册
@@ -105,8 +131,11 @@
 							setDisplay();
 					}
 				});
+				input.attachEvent("onkeypress", function(e) {
+					setDisplay();
+				});
 			} else {
-				//IE10\11下事件注册
+				//其他浏览器下事件注册
 				"change keypress input DOMAttrModified".split(/\s/).forEach(function(eType){
 					input.addEventListener(eType, function(e){
 						transparent();
@@ -116,6 +145,7 @@
 				});
 				transparent();
 			}
+			//初始化placeholder及其样式
 			setText();
 			setDisplay();
 			
@@ -157,9 +187,9 @@
 		head.insertBefore(styleNode, head.firstChild);
 
 		if(styleNode.styleSheet){
-			styleNode.styleSheet.addRule(placeholder, "color: gray;");
+			styleNode.styleSheet.addRule(placeholder, cssDefault);
 		} else {
-			styleNode.appendChild(doc.createTextNode(placeholder + "{color: gray;}"));
+			styleNode.appendChild(doc.createTextNode(placeholder + "{" + cssDefault + "}"));
 		}
 		if(win.LQ){
 			init(LQ);
