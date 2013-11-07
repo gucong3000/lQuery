@@ -3,11 +3,15 @@
  * 顺便支持了autofocus
  * <input type="text" placeholder="DEMO" autofocus>
  */
+"use strict";
 (function(win, undefined){
-	"use strict";
 	var doc = document,
 		placeholder = "placeholder",
 		notSupport = createElement("input")[placeholder] === undefined,
+		head = doc.documentElement.firstChild,
+		styleNode = createElement("style"),
+		documentMode = doc.documentMode,
+		normal = "normal",
 		activeElement;
 		
 	function createElement(tag){
@@ -16,7 +20,7 @@
 
 	function createHolder(){
 		var input = this;
-		if(/^text|textarea|password$/.test(input.type)){
+		if(/^text|textarea|password|email|month|search|tel|url$/i.test(input.type)){
 			var holder,
 				setText = function (){
 					var text = placeholder in input ? input[placeholder] : input.getAttribute(placeholder);
@@ -33,57 +37,91 @@
 						holder.innerHTML = text || "";
 					}
 				},
-		
+				timer,
 				setDisplay = function (){
+					clearTimeout(timer);
 					if(holder){
 						var show = holder.innerHTML && !input.value,
-							parent = input.parentNode,
-							style = holder.runtimeStyle;
-						style.display = show ? "inline-block" : "none";
-						if(show){
-							if(input.currentStyle.position !== "static"){
-								style.left = input.offsetLeft + "px";
-								style.top = input.offsetTop + "px";
-								style.position = "absolute";
-								currCss("marginLeft", "borderLeftWidth");
-								currCss("marginTop", "borderTopWidth");
+							style = holder.runtimeStyle,
+							parent = input.parentNode;
+						style.display = show && parent ? "inline-block" : "none";
+						if(parent && (input.offsetHeight || input.offsetWidth)){
+							if(show){
+								if(/^textarea$/i.test(input.tagName)){
+									style.whiteSpace = normal;
+									style.wordBreak = "break-all";
+								} else {
+									style.whiteSpace = "nowrap";
+									style.wordBreak = normal;
+								}
+								if(input.currentStyle.position !== "static"){
+									style.width = (input.clientWidth || input.offsetWidth) + "px";
+									style.left = input.offsetLeft + "px";
+									style.top = input.offsetTop + "px";
+									style.position = "absolute";
+									currCss("marginLeft", "borderLeftWidth");
+									currCss("marginTop", "borderTopWidth");
+									currCss("paddingLeft");
+									currCss("paddingTop");
+									currCss("zIndex");
+								}
+								style.textOverflow = "ellipsis"; 
+								style.overflow = "hidden";
 								currCss("lineHeight");
-								currCss("paddingLeft");
-								currCss("paddingTop");
 								currCss("fontFamily");
 								currCss("fontWidth");
 								currCss("fontSize");
-								currCss("zIndex");
+
+								if(input.nextSibling){
+									parent.insertBefore(holder, input.nextSibling);
+								} else {
+									parent.appendChild(holder);
+								}
 							}
-							if(input.nextSibling){
-								parent.insertBefore(holder, input.nextSibling);
-							} else {
-								parent.appendChild(holder);
-							}
+						} else {
+							timer = setTimeout(setDisplay, 50);
 						}
 					}
 				},
 				currCss = function(name,attr){
-					holder.runtimeStyle[name] = input.currentStyle[attr || name];
+					try{
+						holder.runtimeStyle[name] = input.currentStyle[attr || name];
+					}catch(e){}
+				},
+				transparent = function(){
+					input.runtimeStyle.color = input.value ? "" : "transparent";
 				};
 
-			//value和placeholder属性变化时触发
-			input.attachEvent("onpropertychange", function(){
-				switch(event.propertyName){
-					//如placeholder属性发生改变，重置文案和样式
-					case placeholder :
+			//旧版IE下事件注册
+			if(notSupport){
+				//value和placeholder属性变化时触发
+				input.attachEvent("onpropertychange", function(){
+					switch(event.propertyName){
+						//如placeholder属性发生改变，重置文案和样式
+						case placeholder :
+							setText();
+						//如value属性发生改变，重置重置样式
+						case "value" :
+							setDisplay();
+					}
+				});
+			} else {
+				//IE10\11下事件注册
+				"change keypress input DOMAttrModified".split(/\s/).forEach(function(eType){
+					input.addEventListener(eType, function(e){
+						transparent();
 						setText();
-					//如value属性发生改变，重置重置样式
-					case "value" :
-						setDisplay();
-				}
-			});
+						setDisplay()
+					}, true);
+				});
+				transparent();
+			}
 			setText();
 			setDisplay();
 			
 		}
 		//autofocus属性的兼容实现
-		if( !activeElement && input.focus && input.getAttribute("autofocus") !== null ){
+		if( notSupport && !activeElement && input.focus && input.getAttribute("autofocus") !== null ){
 			activeElement = input;
 			setTimeout(input.focus, 1);
 		}
@@ -93,7 +131,8 @@
 		$("input,textarea").each(createHolder);
 	}
 
-	if(notSupport && (!doc.querySelector || doc.documentMode )){
+	//修复原型链
+	if(notSupport && documentMode){
 
 		//IE8及以上统一node.placeholder和node.getAttribute("placeholder")
 		var hook = {
@@ -105,24 +144,28 @@
 				}
 			},
 			defineProperty = Object.defineProperty,
-			prototype = "prototype",
-			styleNode = createElement("style");
+			prototype = "prototype";
 
 		//HTMLTextAreaElement和HTMLInputElement的原型上加入placeholder的get、set方法
 		if(defineProperty){
 			defineProperty(HTMLTextAreaElement[prototype], placeholder, hook);
 			defineProperty(HTMLInputElement[prototype], placeholder, hook);
 		}
-		
-		//给予placeholder默认的样式
-		doc.documentElement.firstChild.appendChild(styleNode);
-		styleNode.styleSheet.addRule(placeholder, "color: gray;");
+	}
 
+	if(notSupport || documentMode){
+		head.insertBefore(styleNode, head.firstChild);
+
+		if(styleNode.styleSheet){
+			styleNode.styleSheet.addRule(placeholder, "color: gray;");
+		} else {
+			styleNode.appendChild(doc.createTextNode(placeholder + "{color: gray;}"));
+		}
 		if(win.LQ){
 			init(LQ);
 		} else if(win.jQuery){
 			jQuery(init);
 		}
 	}
-
+	
 })(this);
