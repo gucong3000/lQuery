@@ -1,17 +1,18 @@
 /*
- * placeholder插件，让浏览器支持HTML5的placeholder属性，高端浏览器下啥也不做
+ * placeholder插件 v0.2
+ * 让低端浏览器支持HTML5的placeholder属性，修复高版本IE下placeholder与其他浏览器的差异
  * 顺便支持了autofocus
  * <input type="text" placeholder="DEMO" autofocus>
  */
 "use strict";
 (function(win, undefined){
 	var doc = document,
-		placeholder = "placeholder",
+		cssDefault = "text-overflow:ellipsis;overflow:hidden;color:gray;padding:0;border:0;",
 		notSupport = createElement("input")[placeholder] === undefined,
-		cssDefault = "color:gray;text-overflow:ellipsis;overflow:hidden",
 		head = doc.documentElement.firstChild,
 		styleNode = createElement("style"),
 		documentMode = doc.documentMode,
+		placeholder = "placeholder",
 		parseInt = win.parseInt,
 		normal = "normal",
 		activeElement,
@@ -92,7 +93,7 @@
 									currCss("zIndex");
 								}
 								//设置继承样式
-								if(getComputedStyle && currStyle.lineHeight === "normal"){
+								if(getComputedStyle && currStyle.lineHeight === normal){
 									style.lineHeight = getComputedStyle(input).height;
 								} else {
 									currCss("lineHeight");
