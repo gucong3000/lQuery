@@ -12,9 +12,13 @@
 		head = doc.documentElement.firstChild,
 		styleNode = createElement("style"),
 		documentMode = doc.documentMode,
+		parseInt = win.parseInt,
 		normal = "normal",
-		activeElement;
-		
+		activeElement,
+		getComputedStyle = win.getComputedStyle ? function(node){
+			return win.getComputedStyle(node, null);
+		} : 0;
+
 	//document.createElement缩写
 	function createElement(tag){
 		return doc.createElement(tag);
@@ -27,7 +31,7 @@
 
 	//获取node的计算样式，兼容IE，非IE
 	function currentStyle(node){
-		return node.currentStyle || getComputedStyle(node, null);
+		return node.currentStyle || getComputedStyle(node);
 	}
 
 	//为this简历模拟的placeholder
@@ -63,6 +67,7 @@
 					clearTimeout(timer);
 					if(holder){
 						var show = holder.innerHTML && !input.value,
+							currStyle = currentStyle(input),
 							style = runtimeStyle(holder),
 							parent = input.parentNode;
 						style.display = show && parent ? "inline-block" : "none";
@@ -77,19 +82,22 @@
 									style.wordBreak = normal;
 								}
 								//如果文本框定位不为static，则自动计算placeholder的位置
-								if(currentStyle(input).position !== "static"){
-									style.width = (input.clientWidth || input.offsetWidth) + "px";
-									style.left = input.offsetLeft + "px";
-									style.top = input.offsetTop + "px";
+								if(currStyle.position !== "static"){
+									style.width = getComputedStyle ? getComputedStyle(input).width : (input.clientWidth - parseInt(currStyle.paddingLeft) - parseInt(currStyle.paddingRight)) + "px";
+									style.left = (input.offsetLeft + input.clientLeft) + "px";
+									style.top = (input.offsetTop + input.clientTop) + "px";
 									style.position = "absolute";
-									currCss("marginLeft", "borderLeftWidth");
-									currCss("marginTop", "borderTopWidth");
-									currCss("paddingLeft");
-									currCss("paddingTop");
+									currCss("marginLeft", "paddingLeft");
+									currCss("marginTop", "paddingTop");
 									currCss("zIndex");
 								}
-								//设置集成样式
-								currCss("lineHeight");
+								//设置继承样式
+								if(getComputedStyle && currStyle.lineHeight === "normal"){
+									style.lineHeight = getComputedStyle(input).height;
+								} else {
+									currCss("lineHeight");
+								}
+								currCss("textAlign");
 								currCss("fontFamily");
 								currCss("fontWidth");
 								currCss("fontSize");
@@ -140,7 +148,7 @@
 					input.addEventListener(eType, function(e){
 						transparent();
 						setText();
-						setDisplay()
+						setDisplay();
 					}, true);
 				});
 				transparent();
