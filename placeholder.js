@@ -3,6 +3,7 @@
  * 让低端浏览器支持HTML5的placeholder属性，修复高版本IE下placeholder与其他浏览器的差异
  * 顺便支持了autofocus
  * <input type="text" placeholder="DEMO" autofocus>
+ * 注意：高版本IE的placeholder与其他浏览器表现有差异，所以隐藏并重新实现了一次，目前只测试到IE11，未来IE12出现，且表现与其他浏览器一致，应修改此插件
  */
 "use strict";
 (function(win, undefined){
@@ -122,7 +123,7 @@
 						runtimeStyle(holder)[name] = currentStyle(input)[attr || name];
 					}catch(e){}
 				},
-				//文本框无值时将字体颜色设为透明
+				//文本框无值时将字体颜色设为透明，以便隐藏原生placeholder，重新实现。
 				transparent = function(){
 					runtimeStyle(input).color = input.value ? "" : "transparent";
 				};
