@@ -8,12 +8,12 @@
 "use strict";
 (function(win, undefined){
 	var doc = document,
+		placeholder = "placeholder",
 		cssDefault = "text-overflow:ellipsis;overflow:hidden;color:gray;padding:0;border:0;",
 		notSupport = createElement("input")[placeholder] === undefined,
 		head = doc.documentElement.firstChild,
 		styleNode = createElement("style"),
 		documentMode = doc.documentMode,
-		placeholder = "placeholder",
 		parseInt = win.parseInt,
 		normal = "normal",
 		activeElement,
@@ -163,7 +163,9 @@
 		//autofocus属性的兼容实现
 		if( notSupport && !activeElement && input.focus && input.getAttribute("autofocus") !== null ){
 			activeElement = input;
-			setTimeout(input.focus, 1);
+			setTimeout(function(){
+				input.focus();
+			}, 1);
 		}
 	}
 
