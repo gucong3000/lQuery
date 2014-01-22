@@ -234,7 +234,7 @@
 	} else {
 		if(documentMode > 9) {
 			//IE 10+中placeholder在文本框focus时则消失，这与其他浏览器有差异，用css干掉其原生的placeholder功能
-			addRule("color:transparent;", ":-ms-input-");
+			addRule("color:transparent !important;", ":-ms-input-");
 		} else {
 			//高端浏览器下写入css rest
 			addRule(cssDefault, "netscape" in win ? "::-moz-": "::-webkit-input-");
